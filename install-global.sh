@@ -237,7 +237,7 @@ echo "The system uses these MCP servers (all optional - features degrade gracefu
 echo ""
 echo "  RepoPrompt     - Token-efficient codebase exploration (/rp-explorer, /onboard)"
 echo "                   Get from: https://repoprompt.com"
-echo "                   Install: App (enable MCP Server) or CLI (npm i -g @anthropics/repoprompt)"
+echo "                   Enable MCP Server in the app settings"
 echo ""
 echo "  Braintrust     - Session tracing + auto-learnings"
 echo "                   Get key: https://braintrust.dev"
