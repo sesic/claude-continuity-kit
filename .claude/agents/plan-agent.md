@@ -40,7 +40,50 @@ $CLAUDE_PROJECT_DIR = /path/to/project
 
 Parse this carefully - it's the input for your plan.
 
-## Step 3: Research with MCP Tools
+## Step 3: Clarify Requirements (Interview)
+
+Before diving into research, identify ambiguous areas and gather user preferences:
+
+**When to Interview:**
+- Multiple valid architectural approaches exist
+- User preferences affect the design (e.g., library choices)
+- Requirements have ambiguous scope
+- Trade-offs need human judgment
+
+**How to Interview:**
+Use AskUserQuestion to gather preferences efficiently:
+
+```
+AskUserQuestion({
+  questions: [
+    {
+      question: "Which approach should we use for [aspect]?",
+      header: "Approach",
+      options: [
+        { label: "Option A (Recommended)", description: "Why this is recommended" },
+        { label: "Option B", description: "Trade-offs of this approach" }
+      ],
+      multiSelect: false
+    }
+  ]
+})
+```
+
+**Interview Rules:**
+- Maximum 4 questions per interview
+- 2-4 options per question
+- Put recommended option first with "(Recommended)" suffix
+- Keep descriptions brief but informative
+- Only ask about genuine decision points, not implementation details
+
+**After Interview:**
+Document choices in plan under "## Design Decisions" section:
+```markdown
+## Design Decisions
+- **[Question asked]**: [User's choice] - [Brief rationale]
+```
+
+## Step 4: Research with MCP Tools
 
 Use these for gathering information:
 
@@ -66,7 +109,7 @@ uv run python -m runtime.harness scripts/morph_apply.py \
     --code_edit "// ... existing code ...\nnew_code\n// ... existing code ..."
 ```
 
-## Step 4: Write Output
+## Step 5: Write Output
 
 **ALWAYS write your plan to:**
 ```
