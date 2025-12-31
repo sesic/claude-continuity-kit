@@ -70,7 +70,6 @@ AskUserQuestion({
 ```
 
 **Interview Rules:**
-- Maximum 4 questions per interview
 - 2-4 options per question
 - Put recommended option first with "(Recommended)" suffix
 - Keep descriptions brief but informative
