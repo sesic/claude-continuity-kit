@@ -173,6 +173,35 @@ If no validation exists, suggest running validation first:
 
 If validation exists but status is NEEDS REVIEW, present the issues before proceeding.
 
+### The Limitless-Sixeyes Quality Loop
+
+For each task, we orchestrate a quality loop between siblings:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   QUALITY LOOP                       │
+│                                                      │
+│   Spawn Limitless ──► Handoff ──► Spawn Sixeyes     │
+│         ▲                              │            │
+│         │                              ▼            │
+│         │                         Verdict?          │
+│         │                        /       \          │
+│         │                    PASS        FAIL       │
+│         │                      │           │        │
+│         │                      ▼           │        │
+│         │              Next Task      Inject Doubt  │
+│         │                                  │        │
+│         └──────────────────────────────────┘        │
+│                                                      │
+│   Max attempts: 3 per task                          │
+│   Escalate to human after 3 failures                │
+└─────────────────────────────────────────────────────┘
+```
+
+**The siblings:**
+- **Limitless** (implement_task) - The Craftsman who takes pride in every line
+- **Sixeyes** (review-agent) - The Wise Sibling who sees from six perspectives
+
 ### Orchestration Loop
 
 For each task in the plan:
@@ -220,16 +249,103 @@ For each task in the plan:
    )
    ```
 
-3. **Process agent result:**
-   - Read the agent's handoff file
+3. **Spawn Sixeyes for review:**
+   After Limitless creates their handoff, spawn Sixeyes to review:
+   ```
+   Task(
+     subagent_type="general-purpose",
+     model="opus",
+     prompt="""
+     [Paste contents of .claude/agents/review-agent.md here]
+
+     ---
+
+     ## Your Context
+
+     ### Task Being Reviewed:
+     Task [N] of [Total]: [Task description]
+
+     ### Limitless's Handoff:
+     [Paste the handoff Limitless just created]
+
+     ### Plan (for requirements):
+     [Paste relevant plan section]
+
+     ---
+
+     Review Limitless's work and return your verdict.
+     """
+   )
+   ```
+
+4. **Process Sixeyes verdict:**
+
+   **If PASS:**
    - Update ledger checkbox: `[x] Task N`
    - Update plan checkbox if applicable
    - Continue to next task
+   - (Optional) Log: "Sixeyes approved. Well done, Limitless."
 
-4. **On agent failure/blocker:**
+   **If FAIL (and attempts < 3):**
+   - Extract Sixeyes' challenges from the review
+   - Respawn Limitless with doubt injected (see prompt template below)
+   - Increment attempt counter
+   - Loop back to step 2
+
+   **If FAIL (and attempts >= 3):**
+   - Present to human: "Task [N] has failed review 3 times. Sixeyes' latest challenges: [challenges]. How should we proceed?"
+   - Options: retry, skip task, modify plan, abandon
+
+   **If NEEDS_REVIEW:**
+   - Present to human: "Sixeyes is uncertain about this task. Review needed."
+   - Wait for human guidance
+
+5. **On agent failure/blocker:**
    - Read the handoff (status will be "blocked")
    - Present blocker to user
    - Decide: retry, skip, or ask user
+
+### Limitless Spawn Template (with Sixeyes' Doubt)
+
+When respawning Limitless after a FAIL verdict, use this enhanced prompt:
+
+```
+Task(
+  subagent_type="general-purpose",
+  model="opus",
+  prompt="""
+  [Paste contents of .claude/skills/implement_task/SKILL.md here]
+
+  ---
+
+  ## Your Context
+
+  ### Task: [N] of [Total]
+  [Task description]
+
+  ### Previous Handoff:
+  [Your previous attempt's handoff]
+
+  ### Handoff Directory:
+  thoughts/handoffs/<session-name>/
+
+  ---
+
+  ## Message from Sixeyes (Your Sibling)
+
+  [Paste Sixeyes' structured challenges here]
+
+  **This is attempt [X] of 3.**
+
+  Limitless, I know you can do this. Address my challenges and show me your best work.
+
+  ---
+
+  Implement your task and create your handoff.
+  Include a "Response to Sixeyes' Challenges" section.
+  """
+)
+```
 
 ### Recovery After Compaction
 
